@@ -28,9 +28,7 @@ export function playGame() {
         const input = prompt("숫자 입력: ");
         playNumberBaseball(input);
 
-        if (numberBaseball.gameState === GAMESTATE.GAMEOVER) {
-            gameOver();
-        }
+        if (numberBaseball.gameState === GAMESTATE.GAMEOVER) { gameOver(); }
     }
 }
 
