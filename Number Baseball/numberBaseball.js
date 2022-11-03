@@ -1,3 +1,5 @@
+import promptSync from 'prompt-sync';
+
 /**
  * Report Gamestate
  * @enum {string}
@@ -14,27 +16,26 @@ const numberBaseball = {
     number: '',
     strike: 0,
     ball: 0,
-    gamestate: GAMESTATE.GAMEPLAY
+    gameState: GAMESTATE.GAMEPLAY
 }
 
-exports = { GAMESTATE, numberBaseball };
-
 export function playGame() {
-    const prompt = require("prompt-sync")();
+    const prompt = promptSync();
 
     initPlay();
 
-    while (numberBaseball.gamestate !== GAMESTATE.GAMEEND) {
+    while (numberBaseball.gameState !== GAMESTATE.GAMEEND) {
         const input = prompt("숫자 입력: ");
         playNumberBaseball(input);
 
-        if (numberBaseball.gamestate === GAMESTATE.GAMEOVER) GameOver();
+        if (numberBaseball.gameState === GAMESTATE.GAMEOVER) {
+            gameOver();
+        }
     }
-
 }
 
 function initPlay() {
-    numberBaseball.gamestate = GAMESTATE.GAMEPLAY;
+    numberBaseball.gameState = GAMESTATE.GAMEPLAY;
     numberBaseball.number = '';
     createNumber();
     writeGameStartScript();
@@ -139,7 +140,7 @@ function reportcompareResult() {
     } else if (numberBaseball.ball === 0) {
         if (numberBaseball.strike === numberBaseball.number.length) {
             console.log("정답입니다!");
-            numberBaseball.gamestate = GAMESTATE.GAMEOVER;
+            numberBaseball.gameState = GAMESTATE.GAMEOVER;
         } else {
             console.log(numberBaseball.strike + "S");
         }
@@ -153,11 +154,11 @@ function reportcompareResult() {
 
 function gameOver() {
     console.log("게임이 종료되었습니다. 재시작하시겠습니까? (y/n)");
-    const prompt = require("prompt-sync")();
+    const prompt = promptSync();
     const input = prompt("재시작 여부: ");
 
     if (input === 'n') {
-        numberBaseball.gamestate = GAMESTATE.GAMEEND;
+        numberBaseball.gameState = GAMESTATE.GAMEEND;
     } else {
         initPlay();
     }
