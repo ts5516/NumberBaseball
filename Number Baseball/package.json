@@ -1,12 +1,12 @@
 {
   "name": "project_numberbaseball",
   "version": "1.0.0",
-  "main": "numberBaseball.js",
+  "main": "number_baseball.js",
   "type": "module",
   "dependencies": {
     "prompt-sync": "^4.2.0"
   },
   "scripts": {
-    "start": "node numberBaseball.js"
+    "start": "node number_baseball.js"
   }
 }
