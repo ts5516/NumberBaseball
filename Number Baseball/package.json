@@ -1,0 +1,11 @@
+{
+  "name": "project_numberbaseball",
+  "version": "1.0.0",
+  "main": "numberBaseball.js",
+  "dependencies": {
+    "prompt-sync": "^4.2.0"
+  },
+  "scripts": {
+    "start": "node numberBaseball.js"
+  }
+}
