@@ -11,11 +11,56 @@ const GAMESTATE = {
 
 Object.freeze(GAMESTATE);
 
-const numberBaseball = {
-    answer: '',
-    strike: 0,
-    ball: 0,
-    gameState: GAMESTATE.GAMEPLAY
+class NumberBaseball {
+    readonly NUM_LEN: number = 4;
+
+    private number: string;
+    private strike: number;
+    private ball: number;
+    gameState: string;
+
+    constructor() {
+        this.number = '';
+        this.strike = 0;
+        this.ball = 0;
+        this.gameState = GAMESTATE.GAMEPLAY;
+    }
+
+    generateNumber() {
+        const numArray = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+        numArray.sort(() => Math.random() - 0.5);
+        this.number = '';
+
+        for (let i = 0; i < 4; i++) {
+            this.number += numArray[i];
+        }
+    }
+
+    initStrikeAndBall() {
+        this.strike = 0;
+        this.ball = 0;
+    }
+
+    addStrike() {
+        this.strike++;
+    }
+
+    addBall() {
+        this.ball++;
+    }
+
+    getStrike() {
+        return this.strike;
+    }
+
+    getBall() {
+        return this.ball;
+    }
+
+    getNumber() {
+        return this.number;
+    }
 }
 
 const readLine = readline.createInterface({
@@ -23,68 +68,67 @@ const readLine = readline.createInterface({
     output: process.stdout
 });
 
+async function playGame() {
+    let numberBaseball = initGame();
 
-function playAndInitGame() {
-    numberBaseball.gameState = GAMESTATE.GAMEPLAY;
-    numberBaseball.answer = '';
-    createNumber();
+    do {
+        const inputStr = await input(numberBaseball);
+        numberBaseball = update(inputStr, numberBaseball);
+        render(numberBaseball);
+    } while (numberBaseball.gameState !== GAMESTATE.GAMEOVER);
+
+    gameEnd();
+}
+
+function initGame() {
     writeGameStartScript();
-    goToNextTurn();
+
+    const nb = new NumberBaseball();
+    return nb;
 }
 
-function createNumber() {
-    const numArray = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+function input(numberBaseball: NumberBaseball) {
+    let questionText = '';
 
-    numArray.sort(() => Math.random() - 0.5);
+    if (numberBaseball.getStrike() === numberBaseball.NUM_LEN) {
+        questionText = '게임이 종료되었습니다. 재시작하시겠습니까? (y/n)\n';
+    } else {
+        questionText = '숫자 입력: ';
+    }
 
-    for (let i = 0; i < 4; i++) {
-        numberBaseball.answer += numArray[i];
+    return new Promise((resolve) => {
+        readLine.question(questionText, (inputStr) => resolve(inputStr));
+    })
+}
+
+function update(inputStr: any, numberBaseball: NumberBaseball) {
+    if (numberBaseball.getNumber() === '')
+        numberBaseball.generateNumber();
+
+    if (numberBaseball.getStrike() === numberBaseball.NUM_LEN) {
+        return doRestartOrEnd(inputStr, numberBaseball);
+    } else {
+        return doCompareAnswer(inputStr, numberBaseball);
     }
 }
 
-function writeGameStartScript() {
-    console.log("\n숫자야구를 시작합니다!\n");
-    console.log("숫자를 입력해주세요!");
-    console.log("숫자는 0~9까지 중복되지 않는 4자리 숫자입니다!");
-}
-
-function goToNextTurn() {
-    if (numberBaseball.gameState === GAMESTATE.GAMEPLAY) {
-        eventInputNumber();
-    } else if (numberBaseball.gameState === GAMESTATE.GAMEOVER) {
-        eventInputRestartOrEnd();
+function doRestartOrEnd(inputStr: string, numberBaseball: NumberBaseball) {
+    if (inputStr === 'n') {
+        numberBaseball.gameState = GAMESTATE.GAMEOVER;
+        return numberBaseball;
+    } else {
+        return initGame();
     }
 }
 
-function eventInputNumber() {
-    readLine.question('숫자 입력: ', function (input) {
-        compareToAnswer(input);
-        goToNextTurn();
-    });
-}
-
-function eventInputRestartOrEnd() {
-    readLine.question('게임이 종료되었습니다. 재시작하시겠습니까? (y/n)\n',
-        function (input) {
-            if (input === 'n') {
-                readLine.close();
-                process.exit();
-            } else {
-                playAndInitGame();
-            }
-        });
-}
-
-/**
- * @param {string} inputStr inputs received from users
- */
-function compareToAnswer(inputStr: string) {
+function doCompareAnswer(inputStr: string, numberBaseball: NumberBaseball) {
     if (isValidInput(inputStr)) {
-        startCompareToAnswer(inputStr);
-        reportcompareResult();
+        compareToAnswer(inputStr, numberBaseball);
     } else {
         console.log("올바르지 않은 입력입니다. 다시 입력해주세요!");
     }
+
+    return numberBaseball;
 }
 
 /**
@@ -138,37 +182,53 @@ function isRedundancyInput(inputStr: string): boolean {
  * 
  * @param {string} inputStr inputs received from users
  */
-function startCompareToAnswer(inputStr: string) {
-    for (let i = 0; i < numberBaseball.answer.length; i++) {
-        if (numberBaseball.answer.indexOf(inputStr[i]) !== -1) {
-            if (numberBaseball.answer[i] === inputStr[i]) {
-                numberBaseball.strike++;
+function compareToAnswer(inputStr: string, numberBaseball: NumberBaseball) {
+    numberBaseball.initStrikeAndBall();
+
+    for (let i = 0; i < numberBaseball.NUM_LEN; i++) {
+        if (numberBaseball.getNumber().indexOf(inputStr[i]) !== -1) {
+            if (numberBaseball.getNumber()[i] === inputStr[i]) {
+                numberBaseball.addStrike();
             } else {
-                numberBaseball.ball++;
+                numberBaseball.addBall();
             }
         }
     }
-    console.log(numberBaseball.answer);
+    console.log(numberBaseball.getNumber());
 }
 
-function reportcompareResult() {
-    if (numberBaseball.strike === 0 && numberBaseball.ball === 0) {
+function render(numberBaseball: NumberBaseball) {
+    if (numberBaseball.getNumber() !== '' &&
+        numberBaseball.gameState !== GAMESTATE.GAMEOVER) {
+        reportcompareResult(numberBaseball);
+    }
+}
+
+function writeGameStartScript() {
+    console.log("\n숫자야구를 시작합니다!\n");
+    console.log("숫자를 입력해주세요!");
+    console.log("숫자는 0~9까지 중복되지 않는 4자리 숫자입니다!");
+}
+
+function reportcompareResult(numberBaseball: NumberBaseball) {
+    if (numberBaseball.getStrike() === 0 && numberBaseball.getBall() === 0) {
         console.log("Out");
-    } else if (numberBaseball.strike === 0) {
-        console.log(numberBaseball.ball + "B");
-    } else if (numberBaseball.ball === 0) {
-        if (numberBaseball.strike === numberBaseball.answer.length) {
+    } else if (numberBaseball.getStrike() === 0) {
+        console.log(numberBaseball.getBall() + "B");
+    } else if (numberBaseball.getBall() === 0) {
+        if (numberBaseball.getStrike() === numberBaseball.NUM_LEN) {
             console.log("정답입니다!");
-            numberBaseball.gameState = GAMESTATE.GAMEOVER;
         } else {
-            console.log(numberBaseball.strike + "S");
+            console.log(numberBaseball.getStrike() + "S");
         }
     } else {
-        console.log(numberBaseball.strike + "S " + numberBaseball.ball + "B");
+        console.log(numberBaseball.getStrike() + "S " + numberBaseball.getBall() + "B");
     }
-
-    numberBaseball.strike = 0;
-    numberBaseball.ball = 0;
 }
 
-playAndInitGame();
+function gameEnd() {
+    readLine.close();
+    process.exit(1);
+}
+
+playGame();
